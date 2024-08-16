@@ -15,37 +15,45 @@ function DrawingApp() {
   const [selectedColor, setSelectedColor] = useState("#fff");
   const [selectedSize, setSelectedSize] = useState(5); // Initial size
   const canvasRef = useRef(null);
-  const [undoHistory, setUndoHistory] = useState<LineData[] | any>([]); // Array for undo
-  const [redoHistory, setRedoHistory] = useState<LineData[] | any>([]);
+  const [undoHistory, setUndoHistory] = useState<LineData[][] >([]); // Array for undo
+  const [redoHistory, setRedoHistory] = useState<LineData[][] >([]);
 
   const handleColorChange = (color: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedColor(color.target.value); // Update color state
   };
 
+  const logData = ()=>{
+    console.log("lines :",lines)
+    console.log("undoHistory: ",undoHistory)
+  }
+
+
   const handleMouseDown = (e: any) => {
-    if (!eraser) {
-      setIsDrawing(true);
-      setLines([
-        ...lines,
-        {
-          points: [e.evt.offsetX, e.evt.offsetY],
-          strokeWidth: selectedSize,
-          color: selectedColor,
-        },
-      ]);
-    } else {
-      setIsDrawing(true);
-      setLines([
-        ...lines,
-        {
-          points: [e.evt.offsetX, e.evt.offsetY],
-          strokeWidth: selectedSize,
-          color: "#000",
-        },
-      ]);
+  
+    // if (!eraser) {
+    //   const newLine:LineData = {
+    //     points: [e.evt.offsetX, e.evt.offsetY],
+    //     strokeWidth: selectedSize,
+    //     color: selectedColor,
+    //   }
+    //   setIsDrawing(true);
+    //   setLines([
+    //     ...lines,
+    //     newLine,
+    //   ]);
+    // } else {
+    const newLine:LineData = {
+      points: [e.evt.offsetX, e.evt.offsetY],
+      strokeWidth: selectedSize,
+      color: selectedColor,
     }
-    setUndoHistory([...undoHistory, [...lines]]);
+    setIsDrawing(true);
+    setUndoHistory([...undoHistory, lines]);
+    setLines([...lines, newLine,]);
     setRedoHistory([]);
+    // }
+    // setRedoHistory([]);
+    logData()
   };
 
   const handleMouseMove = (e: any) => {
@@ -76,23 +84,39 @@ function DrawingApp() {
     setSelectedSize(newSize);
   };
   const handleUndo = () => {
+    console.log("Undo")
     if (undoHistory.length > 0) {
-      const newHistory = [...undoHistory];
-      const lastState = newHistory.pop();
-      setLines(lastState);
-      setUndoHistory(newHistory);
-      redoHistory.push(lastState);
+      // const lastItem = lines.pop()
       setRedoHistory([...redoHistory, lines]);
+      const lastUndo = undoHistory[undoHistory.length-1]
+      undoHistory.pop()
+      setLines([...lastUndo])
+      // setUndoHistory([],[1],[1,2])
+      // const newHistory = [...undoHistory];
+      // const lastState = newHistory.pop();
+      // console.log("lastState",lastState)
+      // console.log("newHistory2",newHistory)
+      // setLines(newHistory);
+      // setUndoHistory(newHistory);
+      // redoHistory.push(lastState);
+      // setRedoHistory([...redoHistory, lines]);
     }
+    // logData()
   };
 
   const handleRedo = () => {
+    console.log("Redo")
     if (redoHistory.length > 0) {
-      const newRedoHistory = [...redoHistory];
-      const nextState = newRedoHistory.pop();
-      setLines(nextState);
-      setRedoHistory(newRedoHistory);
-      setUndoHistory([...undoHistory, lines]);
+      setUndoHistory([...undoHistory, lines])
+      const lastRedo = redoHistory[redoHistory.length-1]
+      redoHistory.pop()
+      setLines([...lastRedo])
+
+      // const newRedoHistory = [...redoHistory];
+      // const nextState = newRedoHistory.pop();
+      // setLines(nextState);
+      // setRedoHistory(newRedoHistory);
+      // setUndoHistory([...undoHistory, lines]);
     }
   };
   const handleDownload = () => {
@@ -193,13 +217,13 @@ function DrawingApp() {
 
           <div
             className="dt-undo-redo-items flex felx-row items-center justify-between"
-            onClick={handleUndo}
-          >
+            >
             <div className="undo">
               <img
                 className="object-scale-down h-14"
                 src="https://cdn.jsdelivr.net/gh/hicodersofficial/drawing-tablet@main/assets/undo.png"
                 title="Undo (Ctrl + Z)"
+                onClick={handleUndo}
                 id="undo"
                 alt=""
               />
