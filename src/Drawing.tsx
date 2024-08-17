@@ -13,10 +13,10 @@ function DrawingApp() {
   const [eraser, setEraser] = useState(false);
   const [lines, setLines] = useState<LineData[]>([]);
   const [selectedColor, setSelectedColor] = useState("#fff");
-  const [selectedSize, setSelectedSize] = useState(5); // Initial size
+  const [selectedSize, setSelectedSize] = useState(5);
   const canvasRef = useRef(null);
-  const [undoHistory, setUndoHistory] = useState<LineData[] | any>([]); // Array for undo
-  const [redoHistory, setRedoHistory] = useState<LineData[] | any>([]);
+  const [undoHistory, setUndoHistory] = useState<LineData[][]>([]);
+  const [redoHistory, setRedoHistory] = useState<LineData[][]>([]);
 
   const handleColorChange = (color: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedColor(color.target.value); // Update color state
@@ -24,27 +24,21 @@ function DrawingApp() {
 
   const handleMouseDown = (e: any) => {
     if (!eraser) {
-      setIsDrawing(true);
-      setLines([
-        ...lines,
-        {
-          points: [e.evt.offsetX, e.evt.offsetY],
-          strokeWidth: selectedSize,
-          color: selectedColor,
-        },
-      ]);
-    } else {
-      setIsDrawing(true);
-      setLines([
-        ...lines,
-        {
-          points: [e.evt.offsetX, e.evt.offsetY],
-          strokeWidth: selectedSize,
-          color: "#000",
-        },
-      ]);
+      const newLine: LineData = {
+        points: [e.evt.offsetX, e.evt.offsetY],
+        strokeWidth: selectedSize,
+        color: selectedColor,
+      };
+      setLines([...lines, newLine]);
     }
-    setUndoHistory([...undoHistory, [...lines]]);
+    const newLine: LineData = {
+      points: [e.evt.offsetX, e.evt.offsetY],
+      strokeWidth: selectedSize,
+      color: "#000",
+    };
+    setIsDrawing(true);
+    setUndoHistory([...undoHistory, lines]);
+    setLines([...lines, newLine]);
     setRedoHistory([]);
   };
 
@@ -76,33 +70,36 @@ function DrawingApp() {
     setSelectedSize(newSize);
   };
   const handleUndo = () => {
+    console.log("Undo");
     if (undoHistory.length > 0) {
-      const newHistory = [...undoHistory];
-      const lastState = newHistory.pop();
-      setLines(lastState);
-      setUndoHistory(newHistory);
-      redoHistory.push(lastState);
       setRedoHistory([...redoHistory, lines]);
+      const lastUndo = undoHistory[undoHistory.length - 1];
+      undoHistory.pop();
+      setLines([...lastUndo]);
     }
   };
 
   const handleRedo = () => {
+    console.log("Redo");
     if (redoHistory.length > 0) {
-      const newRedoHistory = [...redoHistory];
-      const nextState = newRedoHistory.pop();
-      setLines(nextState);
-      setRedoHistory(newRedoHistory);
       setUndoHistory([...undoHistory, lines]);
+      const lastRedo = redoHistory[redoHistory.length - 1];
+      redoHistory.pop();
+      setLines([...lastRedo]);
     }
   };
+
   const handleDownload = () => {
-    const canvas = canvasRef.current.getStage().toDataURL("image/png");
+    const stage = canvasRef.current;
+    const dataURL = stage.toDataURL({
+      mimeType: "image/png",
+      quality: 1.0,
+    });
     const link = document.createElement("a");
-    link.href = canvas;
     link.download = "drawing.png";
+    link.href = dataURL;
     link.click();
   };
-
   return (
     <Fragment>
       <div className="table mx-auto" style={{ backgroundColor: "black" }}>
@@ -191,11 +188,8 @@ function DrawingApp() {
             </label>
           </div>
 
-          <div
-            className="dt-undo-redo-items flex felx-row items-center justify-between"
-            onClick={handleUndo}
-          >
-            <div className="undo">
+          <div className="dt-undo-redo-items flex felx-row items-center justify-between">
+            <div className="undo" onClick={handleUndo}>
               <img
                 className="object-scale-down h-14"
                 src="https://cdn.jsdelivr.net/gh/hicodersofficial/drawing-tablet@main/assets/undo.png"
@@ -215,7 +209,6 @@ function DrawingApp() {
             </div>
           </div>
           <div className="dt-download-items" onClick={handleDownload}>
-            <a href="" type="download"></a>
             <img
               className="object-scale-down h-14"
               src="https://cdn.jsdelivr.net/gh/hicodersofficial/drawing-tablet@main/assets/download.png"
