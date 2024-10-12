@@ -23,23 +23,37 @@ function DrawingApp() {
   };
 
   const handleMouseDown = (e: any) => {
+    // if (eraser) {
+    //   const newLine: LineData = {
+    //     points: [e.evt.offsetX, e.evt.offsetY],
+    //     strokeWidth: selectedSize,
+    //     color: selectedColor,
+    //   };
+    //   setLines([...lines, newLine]);
+    // }
     if (!eraser) {
       const newLine: LineData = {
         points: [e.evt.offsetX, e.evt.offsetY],
         strokeWidth: selectedSize,
         color: selectedColor,
       };
+
+      setIsDrawing(true);
+      setUndoHistory([...undoHistory, lines]);
       setLines([...lines, newLine]);
+      setRedoHistory([]);
+    } else {
+      const newLine: LineData = {
+        points: [e.evt.offsetX, e.evt.offsetY],
+        strokeWidth: selectedSize,
+        color: "#000",
+      };
+
+      setIsDrawing(true);
+      setUndoHistory([...undoHistory, lines]);
+      setLines([...lines, newLine]);
+      setRedoHistory([]);
     }
-    const newLine: LineData = {
-      points: [e.evt.offsetX, e.evt.offsetY],
-      strokeWidth: selectedSize,
-      color: "#000",
-    };
-    setIsDrawing(true);
-    setUndoHistory([...undoHistory, lines]);
-    setLines([...lines, newLine]);
-    setRedoHistory([]);
   };
 
   const handleMouseMove = (e: any) => {
@@ -90,7 +104,7 @@ function DrawingApp() {
   };
 
   const handleDownload = () => {
-    const stage = canvasRef.current;
+    const stage: any = canvasRef.current;
     const dataURL = stage.toDataURL({
       mimeType: "image/png",
       quality: 1.0,
@@ -128,6 +142,8 @@ function DrawingApp() {
           <div
             className="pencil tools-items hover-scale"
             onMouseDown={() => setEraser(false)}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
           >
             <img
               className="object-scale-down h-14"
